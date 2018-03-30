@@ -85,8 +85,13 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
                 distribution.getOrPut(Pair(firstWord, secondWord), { WordDistribution(seed) }).update(targetWord)
             }
 
-            firstWord = secondWord
-            secondWord = targetWord
+            if (targetWord.first() in sentenceTerminators) {
+                firstWord = ParagraphMarkers.BEGINNING.marker
+                secondWord = ParagraphMarkers.BEGINNING.marker
+            } else {
+                firstWord = secondWord
+                secondWord = targetWord
+            }
         }
 
         return unrecognizedCharacters
@@ -107,7 +112,7 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
         var currentWord: String
         var story = ""
 
-        while (i < minimumWords || secondWord[0] !in sentenceTerminators) {
+        while (i < minimumWords || secondWord.first() !in sentenceTerminators) {
             currentWord = selectNextWord(firstWord, secondWord)
             if (currentWord.isBlank()) {
                 throw RuntimeException("Encountered distribution dead-end (no following words). More training data is required.")
