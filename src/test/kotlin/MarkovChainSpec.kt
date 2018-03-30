@@ -43,6 +43,14 @@ class MarkovChainSpec : ExpectSpec() {
                 markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, "test", "this") shouldBe exactly(1.0)
             }
 
+            expect ("uses start of sentence markers for word following the end of a sentence") {
+                val markovChain = MarkovChain()
+                markovChain.processString("test this sentence. unique word should be start of sentence.")
+
+                markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, MarkovChain.ParagraphMarkers.BEGINNING.marker, "test") shouldBe exactly(0.5)
+                markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, MarkovChain.ParagraphMarkers.BEGINNING.marker, "unique") shouldBe exactly(0.5)
+            }
+
             expect ("reports unrecognized characters") {
                 val markovChain = MarkovChain()
                 val unrecognizedCharacters = markovChain.processString("report this @asdf")
@@ -57,9 +65,9 @@ class MarkovChainSpec : ExpectSpec() {
 
                 markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, "hello", ",") shouldBe exactly(1.0)
                 markovChain.followProbability("are", "you", "?") shouldBe exactly(1.0)
-                markovChain.followProbability("you", "?", "'") shouldBe exactly(1.0)
+                markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, MarkovChain.ParagraphMarkers.BEGINNING.marker, "'") shouldBe exactly(1.0/3)
                 markovChain.followProbability("great", "'", "!") shouldBe exactly(1.0)
-                markovChain.followProbability("'", "!", "\"") shouldBe exactly(1.0)
+                markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, MarkovChain.ParagraphMarkers.BEGINNING.marker, "\"") shouldBe exactly(1.0/3)
                 markovChain.followProbability("hear", "\"", ".") shouldBe exactly(1.0)
             }
 
