@@ -3,11 +3,9 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val inputFiles = arrayListOf(
-            "data/ruby_thomas05a.txt",
-            "data/ruby_thomas05a.txt",
-            "data/ruby_thomas05a.txt",
-            "data/quixote.txt",
-            "data/quixote.txt"
+            "data/dracula.txt",
+            "data/dracula.txt",
+            "data/ruby_thomas05a.txt"
     )
 
     println("Input files:")
@@ -31,7 +29,7 @@ fun main(args: Array<String>) {
 
     val storyLength = 50
     println("Generating story of approximately $storyLength words...")
-    val story = markovChain.generateStory(storyLength)
+    val story = markovChain.generateStory(storyLength, 50)
 
     println("Generated story:")
     println(story)
