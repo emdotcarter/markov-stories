@@ -3,10 +3,12 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val inputFiles = arrayListOf(
-            Pair("data/dracula.txt", 3),
-            Pair("data/quixote.txt", 2),
+            Pair("data/dracula.txt", 0),
+            Pair("data/progcpp.txt", 1),
+            Pair("data/quixote.txt", 0),
             Pair("data/small_test.txt", 0),
-            Pair("data/wizard_of_oz.txt", 4)
+            Pair("data/tale_of_two_cities.txt", 1),
+            Pair("data/wizard_of_oz.txt", 0)
     )
 
     println("Input files:")
@@ -30,11 +32,11 @@ fun main(args: Array<String>) {
         }
     }
 
-    val storyLength = 100
-    val attempts = 1000
+    val storyLength = 1000
+    val attempts = 10
     println("Generating story of approximately $storyLength words...")
     val story = markovChain.generateStory(storyLength, attempts)
 
     println("Generated story:")
-    println(story.replace(".", ".\n"))
+    println(story.replace("([.?!])".toRegex(), "$1\n"))
 }

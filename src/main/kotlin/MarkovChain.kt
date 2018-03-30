@@ -119,6 +119,7 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
             if (currentWord.isBlank()) {
                 if (attemptCount < maximumAttempts) {
                     println("Attempt #$attemptCount failed...")
+                    println("No word found to follow `$firstWord` and `$secondWord`.")
 
                     wordCount = 0
                     firstWord = ParagraphMarkers.BEGINNING.marker
