@@ -5,9 +5,8 @@ fun main(args: Array<String>) {
     val inputFiles = arrayListOf(
             Pair("data/dracula.txt", 3),
             Pair("data/quixote.txt", 2),
-            Pair("data/ruby_thomas05a.txt", 1),
             Pair("data/small_test.txt", 0),
-            Pair("data/wizard_of_oz.txt", 5)
+            Pair("data/wizard_of_oz.txt", 4)
     )
 
     println("Input files:")
@@ -18,23 +17,24 @@ fun main(args: Array<String>) {
     inputFiles.filter { p -> p.second > 0 }.forEach { p ->
         println("Processing ${p.first}...")
 
-        repeat(p.second, {
-            val bufferedReader: BufferedReader = File(p.first).bufferedReader()
-            bufferedReader.useLines { lines ->
-                lines.forEach { l ->
+        val bufferedReader: BufferedReader = File(p.first).bufferedReader()
+        bufferedReader.useLines { lines ->
+            lines.forEach { l ->
+                repeat(p.second, {
                     val unrecognizedCharacters = markovChain.processString(l)
                     if (unrecognizedCharacters.isNotEmpty()) {
                         println("UNRECOGNIZED CHARACTERS: ${unrecognizedCharacters.joinToString()}")
                     }
-                }
+                })
             }
-        })
+        }
     }
 
-    val storyLength = 20
+    val storyLength = 100
+    val attempts = 1000
     println("Generating story of approximately $storyLength words...")
-    val story = markovChain.generateStory(storyLength, 10)
+    val story = markovChain.generateStory(storyLength, attempts)
 
     println("Generated story:")
-    println(story)
+    println(story.replace(".", ".\n"))
 }

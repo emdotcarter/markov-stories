@@ -97,11 +97,18 @@ class MarkovChainSpec : ExpectSpec() {
             }
 
             expect ("throws an exception if there is not enough data") {
-                val markovChain = MarkovChain().initWithString("test.")
+                val markovChain = MarkovChain().initWithString("short test")
 
                 shouldThrow<RuntimeException> {
                     markovChain.generateStory(3)
                 }
+            }
+
+            expect("can create a story with multiple sentences") {
+                val sentence = "hi! this should be printed."
+                val markovChain = MarkovChain(123456789012).initWithString(sentence)
+
+                markovChain.generateStory(3) should haveSameLengthAs(sentence)
             }
         }
     }

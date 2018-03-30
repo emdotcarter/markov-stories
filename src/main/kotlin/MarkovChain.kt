@@ -111,10 +111,10 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
         var attemptCount = 1
         var firstWord = ParagraphMarkers.BEGINNING.marker
         var secondWord = ParagraphMarkers.BEGINNING.marker
-        var currentWord: String
+        var currentWord = ""
         var story = ""
 
-        while (wordCount < minimumWords || secondWord.first() !in sentenceTerminators) {
+        while (wordCount < minimumWords || currentWord.first() !in sentenceTerminators) {
             currentWord = selectNextWord(firstWord, secondWord)
             if (currentWord.isBlank()) {
                 if (attemptCount < maximumAttempts) {
@@ -134,10 +134,15 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
 
             story += if (story.isBlank() || currentWord[0] in noLeadingSpace) "" else " "
             story += currentWord
-
-            firstWord = secondWord
-            secondWord = currentWord
             ++wordCount
+
+            if (currentWord.first() in sentenceTerminators) {
+                firstWord = ParagraphMarkers.BEGINNING.marker
+                secondWord = ParagraphMarkers.BEGINNING.marker
+            } else {
+                firstWord = secondWord
+                secondWord = currentWord
+            }
         }
 
         return story
