@@ -1,8 +1,12 @@
-import io.kotlintest.Spec
+import io.kotlintest.matchers.beGreaterThan
 import io.kotlintest.specs.ExpectSpec
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldThrow
 import io.kotlintest.matchers.exactly
+import io.kotlintest.matchers.haveLength
 import io.kotlintest.matchers.singleElement
+import io.kotlintest.matchers.string.haveSameLengthAs
+import io.kotlintest.should
 
 fun MarkovChain.initWithString(s: String): MarkovChain {
     this.processString(s)
@@ -18,7 +22,7 @@ fun MarkovChain.initWithStrings(ss: List<String>): MarkovChain {
 
 class MarkovChainSpec : ExpectSpec() {
     init {
-        context("processString") {
+        context("processString + followProbability") {
             expect("updates follow probability on each call") {
                 val markovChain = MarkovChain()
                 markovChain.processString("test phrase")
@@ -69,7 +73,31 @@ class MarkovChainSpec : ExpectSpec() {
                 val markovChain2 = MarkovChain(7455214303240106663).initWithStrings(listOf("test phrase", "test other phrase"))
 
                 markovChain1.selectNextWord("test") shouldBe "phrase"
-                markovChain1.selectNextWord("test") shouldBe "other"
+                markovChain2.selectNextWord("test") shouldBe "other"
+            }
+        }
+
+        context("generateStory") {
+            expect("generates a story of at least the required number of words") {
+                val sentence = "this is a test, random other non repeated words."
+                val markovChain = MarkovChain().initWithString(sentence)
+
+                markovChain.generateStory(2).length should beGreaterThan("this".length)
+            }
+
+            expect("only ends at a sentence-terminator") {
+                val sentence = "this is a test, random other non repeated words."
+                val markovChain = MarkovChain().initWithString(sentence)
+
+                markovChain.generateStory(1) should haveSameLengthAs(sentence)
+            }
+
+            expect ("throws an exception if there is not enough data") {
+                val markovChain = MarkovChain().initWithString("test.")
+
+                shouldThrow<RuntimeException> {
+                    markovChain.generateStory(2)
+                }
             }
         }
     }

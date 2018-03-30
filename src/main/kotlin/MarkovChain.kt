@@ -103,6 +103,10 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
         var currentWord = selectNextWord(ParagraphMarkers.BEGINNING.marker)
         var story = currentWord
         while (i < minimumWords || currentWord[0] !in sentenceTerminators) {
+            if (currentWord.isBlank()) {
+                throw RuntimeException("Encountered distribution dead-end (no following words). More training data is required.")
+            }
+
             currentWord = selectNextWord(currentWord)
             story += if (currentWord[0] in noLeadingSpace) "" else " "
             story += currentWord
