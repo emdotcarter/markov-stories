@@ -61,7 +61,7 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
     private val sentenceTerminators = setOf('.', '!', '?')
     private val noLeadingSpace = charArrayOf('.', ',', '!', '?', '-', ';')
 
-    private var distribution = HashMap<String, WordDistribution>()
+    private var distribution = HashMap<Pair<String, String>, WordDistribution>()
 
     private fun invalidCharacters(word: String): Set<Char> {
         val regex = Regex("[^A-z\\d" + punctuation.joinToString("") + "]")
@@ -76,41 +76,48 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
         var unrecognizedCharacters = emptySet<Char>()
         val words = phrase.split(*wordDelimiters).map { w -> w.tokenizeKeepingDelimiters(*punctuation) }.flatten()
 
-        var previousWord = ParagraphMarkers.BEGINNING.marker
-        for (w in words) {
-            if (!wordValid(w)) {
-                unrecognizedCharacters = unrecognizedCharacters.union(invalidCharacters(w))
-            } else if (wordValid(previousWord)) {
-                distribution.getOrPut(previousWord, { WordDistribution(seed) }).update(w)
+        var firstWord = ParagraphMarkers.BEGINNING.marker
+        var secondWord = ParagraphMarkers.BEGINNING.marker
+        for (targetWord in words) {
+            if (!wordValid(targetWord)) {
+                unrecognizedCharacters = unrecognizedCharacters.union(invalidCharacters(targetWord))
+            } else if (wordValid(firstWord) && wordValid(secondWord)) {
+                distribution.getOrPut(Pair(firstWord, secondWord), { WordDistribution(seed) }).update(targetWord)
             }
 
-            previousWord = w
+            firstWord = secondWord
+            secondWord = targetWord
         }
 
         return unrecognizedCharacters
     }
 
-    fun followProbability(first: String, second: String): Double {
-        return distribution[first]?.probability(second) ?: 0.0
+    fun followProbability(first: String, second: String, target: String): Double {
+        return distribution[Pair(first, second)]?.probability(target) ?: 0.0
     }
 
-    fun selectNextWord(word: String): String {
-        return distribution[word]?.selectWord() ?: ""
+    fun selectNextWord(first: String, second: String): String {
+        return distribution[Pair(first, second)]?.selectWord() ?: ""
     }
 
     fun generateStory(minimumWords: Int): String {
         var i = 0
-        var currentWord = selectNextWord(ParagraphMarkers.BEGINNING.marker)
-        var story = currentWord
-        while (i < minimumWords || currentWord[0] !in sentenceTerminators) {
+        var firstWord = ParagraphMarkers.BEGINNING.marker
+        var secondWord = ParagraphMarkers.BEGINNING.marker
+        var currentWord: String
+        var story = ""
+
+        while (i < minimumWords || secondWord[0] !in sentenceTerminators) {
+            currentWord = selectNextWord(firstWord, secondWord)
             if (currentWord.isBlank()) {
                 throw RuntimeException("Encountered distribution dead-end (no following words). More training data is required.")
             }
 
-            currentWord = selectNextWord(currentWord)
-            story += if (currentWord[0] in noLeadingSpace) "" else " "
+            story += if (story.isBlank() || currentWord[0] in noLeadingSpace) "" else " "
             story += currentWord
 
+            firstWord = secondWord
+            secondWord = currentWord
             ++i
         }
 
