@@ -1,5 +1,6 @@
 import java.time.Instant
 import java.util.Random
+import kotlin.math.max
 
 fun String.tokenizeKeepingDelimiters(vararg delimiters: Char): List<String> {
     var lookbehind = "((?<=[" + delimiters.joinToString("") + "]))"
@@ -105,17 +106,30 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
         return distribution[Pair(first, second)]?.selectWord() ?: ""
     }
 
-    fun generateStory(minimumWords: Int): String {
-        var i = 0
+    fun generateStory(minimumWords: Int, maximumAttempts: Int = 1): String {
+        var wordCount = 0
+        var attemptCount = 1
         var firstWord = ParagraphMarkers.BEGINNING.marker
         var secondWord = ParagraphMarkers.BEGINNING.marker
         var currentWord: String
         var story = ""
 
-        while (i < minimumWords || secondWord.first() !in sentenceTerminators) {
+        while (wordCount < minimumWords || secondWord.first() !in sentenceTerminators) {
             currentWord = selectNextWord(firstWord, secondWord)
             if (currentWord.isBlank()) {
-                throw RuntimeException("Encountered distribution dead-end (no following words). More training data is required.")
+                if (attemptCount < maximumAttempts) {
+                    println("Attempt #$attemptCount failed...")
+
+                    wordCount = 0
+                    firstWord = ParagraphMarkers.BEGINNING.marker
+                    secondWord = ParagraphMarkers.BEGINNING.marker
+                    story = ""
+
+                    ++attemptCount
+                    continue
+                } else {
+                    throw RuntimeException("Encountered distribution dead-end (no following words). More training data is required.")
+                }
             }
 
             story += if (story.isBlank() || currentWord[0] in noLeadingSpace) "" else " "
@@ -123,7 +137,7 @@ class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
 
             firstWord = secondWord
             secondWord = currentWord
-            ++i
+            ++wordCount
         }
 
         return story
