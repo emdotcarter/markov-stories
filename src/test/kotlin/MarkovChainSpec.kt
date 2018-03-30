@@ -1,62 +1,76 @@
-import org.jetbrains.spek.api.Spek
-import org.jetbrains.spek.api.dsl.*
-import kotlin.test.*
+import io.kotlintest.Spec
+import io.kotlintest.specs.ExpectSpec
+import io.kotlintest.shouldBe
+import io.kotlintest.matchers.exactly
+import io.kotlintest.matchers.singleElement
 
-object StringMarkovChainSpec: Spek({
-    given("a string markov chain") {
-        on("processString") {
-            val markovChain = StringMarkovChain()
-            markovChain.processString("test phrase")
-            markovChain.processString("test other phrase")
+fun MarkovChain.initWithString(s: String): MarkovChain {
+    this.processString(s)
+    return this
+}
 
-            it("updates the frequency of words with each phrase") {
-                assertEquals(1.0, markovChain.followProbability(StringMarkovChain.ParagraphMarkers.BEGINNING.marker, "test"))
-                assertEquals(0.5, markovChain.followProbability("test", "phrase"))
-                assertEquals(0.5, markovChain.followProbability("test", "other"))
-                assertEquals(1.0, markovChain.followProbability("other", "phrase"))
+fun MarkovChain.initWithStrings(ss: List<String>): MarkovChain {
+    for (s in ss) {
+        this.processString(s)
+    }
+    return this
+}
+
+class MarkovChainSpec : ExpectSpec() {
+    init {
+        context("processString") {
+            expect("updates follow probability on each call") {
+                val markovChain = MarkovChain()
+                markovChain.processString("test phrase")
+
+                markovChain.followProbability("test", "phrase") shouldBe exactly(1.0)
+
+                markovChain.processString("test other phrase")
+
+                markovChain.followProbability("test", "phrase") shouldBe exactly(0.5)
+                markovChain.followProbability("test", "other") shouldBe exactly(0.5)
+                markovChain.followProbability("other", "phrase") shouldBe exactly(1.0)
             }
 
-            it("reports unrecognized characters") {
-                val unrecognizedCharacters = markovChain.processString("should report this @asdf")
-                assertEquals(setOf('@'), unrecognizedCharacters)
+            expect ("sets follow probability using start of sentence marker") {
+                val markovChain = MarkovChain()
+                markovChain.processString("test")
+
+                markovChain.followProbability(MarkovChain.ParagraphMarkers.BEGINNING.marker, "test") shouldBe exactly(1.0)
+            }
+
+            expect ("reports unrecognized characters") {
+                val markovChain = MarkovChain()
+                val unrecognizedCharacters = markovChain.processString("report this @asdf")
+
+                unrecognizedCharacters shouldBe singleElement('@')
             }
         }
 
-        on("selectNextWord") {
-            it("works with punctuation and special characters") {
-                val markovChain = StringMarkovChain()
-                markovChain.processString("hello, how are you? 'i am great'! \"that is good to hear\".")
+        context("selectNextWord") {
+            expect("works with expected punctuation") {
+                val markovChain = MarkovChain().initWithString("hello, how are you? 'i am great'! \"that is good to hear\".")
 
-                assertEquals(1.0, markovChain.followProbability("hello", ","))
-                assertEquals(1.0, markovChain.followProbability(",", "how"))
-                assertEquals(1.0, markovChain.followProbability("you", "?"))
-                assertEquals(1.0, markovChain.followProbability("?", "'"))
-                assertEquals(0.5, markovChain.followProbability("'", "i"))
-                assertEquals(1.0, markovChain.followProbability("great", "'"))
-                assertEquals(0.5, markovChain.followProbability("'", "!"))
-                assertEquals(1.0, markovChain.followProbability("!", "\""))
-                assertEquals(0.5, markovChain.followProbability("\"", "that"))
-                assertEquals(1.0, markovChain.followProbability("hear", "\""))
-                assertEquals(0.5, markovChain.followProbability("\"", "."))
+                markovChain.followProbability("hello", ",") shouldBe exactly(1.0)
+                markovChain.followProbability(",", "how") shouldBe exactly(1.0)
+                markovChain.followProbability("you", "?") shouldBe exactly(1.0)
+                markovChain.followProbability("?", "'") shouldBe exactly(1.0)
+                markovChain.followProbability("'", "i") shouldBe exactly(0.5)
+                markovChain.followProbability("great", "'") shouldBe exactly(1.0)
+                markovChain.followProbability("'", "!") shouldBe exactly(0.5)
+                markovChain.followProbability("!", "\"") shouldBe exactly(1.0)
+                markovChain.followProbability("\"", "that") shouldBe exactly(0.5)
+                markovChain.followProbability("hear", "\"") shouldBe exactly(1.0)
+                markovChain.followProbability("\"", ".") shouldBe exactly(0.5)
+            }
+
+            expect("selects next word randomly") {
+                val markovChain1 = MarkovChain(1).initWithStrings(listOf("test phrase", "test other phrase"))
+                val markovChain2 = MarkovChain(7455214303240106663).initWithStrings(listOf("test phrase", "test other phrase"))
+
+                markovChain1.selectNextWord("test") shouldBe "phrase"
+                markovChain1.selectNextWord("test") shouldBe "other"
             }
         }
     }
-
-    given("a seeded markov chain") {
-        it("returns first following word given appropriate random seeding") {
-            val markovChain = StringMarkovChain(1)
-            markovChain.processString("test phrase")
-            markovChain.processString("test other phrase")
-
-            assertEquals("phrase", markovChain.selectNextWord("test"))
-        }
-
-        it("returns second following word given appropriate random seeding") {
-            var markovChain = StringMarkovChain(7455214303240106663)
-            markovChain.processString("test phrase")
-            markovChain.processString("test other phrase")
-
-            assertEquals("other", markovChain.selectNextWord("test"))
-        }
-    }
-})
+}

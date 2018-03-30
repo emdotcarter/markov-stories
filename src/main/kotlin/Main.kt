@@ -13,7 +13,7 @@ fun main(args: Array<String>) {
     inputFiles.forEach { s -> println("\t $s") }
     println()
 
-    val markovChain = StringMarkovChain()
+    val markovChain = MarkovChain()
     inputFiles.forEach { s ->
         println("Processing $s...")
         val bufferedReader: BufferedReader = File(s).bufferedReader()

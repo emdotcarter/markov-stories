@@ -10,7 +10,7 @@ fun String.tokenizeKeepingDelimiters(vararg delimiters: Char): List<String> {
     return this.split(regex).filter { s -> s.isNotEmpty() }
 }
 
-class StringMarkovChain(private val seed: Long = Instant.now().epochSecond) {
+class MarkovChain(private val seed: Long = Instant.now().epochSecond) {
     private class WordDistribution(seed: Long) {
         private val doubleGenerator = Random(seed)
 
