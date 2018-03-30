@@ -3,33 +3,37 @@ import java.io.File
 
 fun main(args: Array<String>) {
     val inputFiles = arrayListOf(
-            "data/dracula.txt",
-            "data/dracula.txt",
-            "data/ruby_thomas05a.txt"
+            Pair("data/dracula.txt", 3),
+            Pair("data/quixote.txt", 2),
+            Pair("data/ruby_thomas05a.txt", 1),
+            Pair("data/small_test.txt", 0),
+            Pair("data/wizard_of_oz.txt", 5)
     )
 
     println("Input files:")
-    inputFiles.forEach { s -> println("\t $s") }
+    inputFiles.filter { p -> p.second > 0 }.forEach { p -> println("\t ${p.first}: weight = ${p.second}") }
     println()
 
     val markovChain = MarkovChain()
-    inputFiles.forEach { s ->
-        println("Processing $s...")
-        val bufferedReader: BufferedReader = File(s).bufferedReader()
+    inputFiles.filter { p -> p.second > 0 }.forEach { p ->
+        println("Processing ${p.first}...")
 
-        bufferedReader.useLines { lines ->
-            lines.forEach { l ->
-                val unrecognizedCharacters = markovChain.processString(l)
-                if (unrecognizedCharacters.isNotEmpty()) {
-                    println("UNRECOGNIZED CHARACTERS: ${unrecognizedCharacters.joinToString()}")
+        repeat(p.second, {
+            val bufferedReader: BufferedReader = File(p.first).bufferedReader()
+            bufferedReader.useLines { lines ->
+                lines.forEach { l ->
+                    val unrecognizedCharacters = markovChain.processString(l)
+                    if (unrecognizedCharacters.isNotEmpty()) {
+                        println("UNRECOGNIZED CHARACTERS: ${unrecognizedCharacters.joinToString()}")
+                    }
                 }
             }
-        }
+        })
     }
 
-    val storyLength = 50
+    val storyLength = 20
     println("Generating story of approximately $storyLength words...")
-    val story = markovChain.generateStory(storyLength, 50)
+    val story = markovChain.generateStory(storyLength, 10)
 
     println("Generated story:")
     println(story)
